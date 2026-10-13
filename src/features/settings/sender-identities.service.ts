@@ -556,10 +556,15 @@ export const senderIdentitiesService = {
     );
   },
 
-  /** `POST /domain/{id}/recheck`. */
+  /**
+   * `POST /domain/{id}/recheck` - re-checks published DNS against the provider.
+   * Like `verifyDomain`, the provider lookup can run well past the 30s api-client
+   * default, so bound it explicitly at 120s rather than letting the default
+   * abort a check that is still in flight.
+   */
   recheckDomain(domainId: string, orgId?: string) {
     return request<DomainStatusResponse>(
-      { method: "POST", url: `/domain/${domainId}/recheck` },
+      { method: "POST", url: `/domain/${domainId}/recheck`, timeout: 120_000 },
       orgId
     );
   },

@@ -9,6 +9,10 @@ import { apiClient } from "@/lib/api-client";
 import { cn, isJsonObject } from "@/lib/utils";
 
 import { usePagination } from "../../hooks/use-pagination";
+import {
+  isTimeoutError,
+  RECHECK_TIMEOUT_MESSAGE,
+} from "../../utils/recheck-error";
 import { ListPager } from "../list-pager";
 import { SettingsCard, SettingsStepper, StatusPill } from "../settings-card";
 import { DeleteDomainButton } from "./delete-domain-button";
@@ -153,10 +157,26 @@ export function SenderVerificationCard() {
       ]);
       toast.success("Recheck started");
     },
-    onError: (error: unknown) =>
+    onError: async (error: unknown) => {
+      // A slow provider check can outlast the request. It very likely keeps
+      // running server-side, so refresh and frame it as in-progress rather
+      // than surfacing a raw "timeout of Nms exceeded" as a failure.
+      if (isTimeoutError(error)) {
+        await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: domainsKey(organizationId),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: ["account", "domain-dns"],
+          }),
+        ]);
+        toast.message(RECHECK_TIMEOUT_MESSAGE);
+        return;
+      }
       toast.error(
         error instanceof Error ? error.message : "Failed to recheck domain"
-      ),
+      );
+    },
   });
 
   // Lets the user clear out a domain that's stuck pending/failed so it doesn't
