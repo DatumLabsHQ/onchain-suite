@@ -1,10 +1,19 @@
 "use client";
 
-import { ArrowPathIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
-import { useState } from "react";
+import {
+  ArrowDownTrayIcon,
+  ArrowPathIcon,
+  ChevronDownIcon,
+} from "@heroicons/react/24/outline";
+import { useCallback, useMemo, useState } from "react";
 
 import { cn } from "@/lib/utils";
 
+import {
+  buildDnsCsv,
+  dnsCsvFilename,
+  type DnsCsvRecord,
+} from "../../utils/dns-records-csv";
 import { StatusPill } from "../settings-card";
 import { ConflictBox, CurrentInDns, DnsField } from "./dns-record-parts";
 import {
@@ -44,6 +53,8 @@ export function SenderDnsRecords({
   provision,
   onRecheck,
   rechecking,
+  orgName,
+  domain,
 }: {
   dnsLoading: boolean;
   dns: DomainDnsData | undefined;
@@ -51,6 +62,10 @@ export function SenderDnsRecords({
   provision: DomainProvisionResult | undefined;
   onRecheck: () => void;
   rechecking: boolean;
+  /** Organisation name - leads the exported CSV's filename. */
+  orgName?: string;
+  /** The sender domain these records belong to. */
+  domain?: string;
 }) {
   const [openIds, setOpenIds] = useState<Set<string>>(new Set());
   const toggle = (id: string) =>
@@ -60,6 +75,38 @@ export function SenderDnsRecords({
       else next.add(id);
       return next;
     });
+
+  // Flatten whatever records are on screen into the three CSV columns a DNS
+  // admin needs. Prefer the verification records (with their recommended
+  // values); fall back to the provision records for a freshly-added domain.
+  const exportRecords = useMemo<DnsCsvRecord[]>(() => {
+    if (dns && dns.records.length > 0) {
+      return dns.records.map((r) => ({
+        type: r.type,
+        host: r.host,
+        value: r.recommended ?? r.value,
+      }));
+    }
+    return (provision?.providers ?? [])
+      .filter((p) => !HIDDEN_PROVIDERS.has(p.provider.toLowerCase()))
+      .flatMap((p) =>
+        p.records.map((r) => ({ type: r.type, host: r.host, value: r.value }))
+      );
+  }, [dns, provision]);
+
+  const handleExportCsv = useCallback(() => {
+    if (exportRecords.length === 0 || typeof document === "undefined") return;
+    const csv = buildDnsCsv(exportRecords);
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = dnsCsvFilename(orgName, domain);
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
+  }, [exportRecords, orgName, domain]);
 
   if (dnsLoading || !dns) {
     return (
@@ -157,18 +204,31 @@ export function SenderDnsRecords({
         </div>
       )}
 
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={onRecheck}
-        disabled={rechecking}
-      >
-        <ArrowPathIcon
-          aria-hidden="true"
-          className={cn("mr-1.5 h-4 w-4", rechecking && "animate-spin")}
-        />
-        Recheck domain
-      </Button>
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onRecheck}
+          disabled={rechecking}
+        >
+          <ArrowPathIcon
+            aria-hidden="true"
+            className={cn("mr-1.5 h-4 w-4", rechecking && "animate-spin")}
+          />
+          Recheck domain
+        </Button>
+        {exportRecords.length > 0 ? (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportCsv}
+            title="Download these records as a CSV to send to whoever manages your DNS"
+          >
+            <ArrowDownTrayIcon aria-hidden="true" className="mr-1.5 h-4 w-4" />
+            Export CSV
+          </Button>
+        ) : null}
+      </div>
     </div>
   );
 }

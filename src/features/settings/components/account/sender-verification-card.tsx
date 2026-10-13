@@ -18,6 +18,7 @@ import { SettingsCard, SettingsStepper, StatusPill } from "../settings-card";
 import { parseDomainDns } from "./domain-dns";
 import { SenderDnsRecords } from "./sender-dns-records";
 import { useAccountOrg } from "./use-account-org";
+import { useOrgSwitcherContextOptional } from "@/features/common/layout/components/org-switcher-context";
 import {
   type SenderDomainRecord,
   senderIdentitiesService,
@@ -58,6 +59,7 @@ const domainsKey = (orgId: string | null) =>
 
 export function SenderVerificationCard() {
   const { organizationId, orgHeaders } = useAccountOrg();
+  const activeOrg = useOrgSwitcherContextOptional()?.activeOrg;
   const queryClient = useQueryClient();
   const [domainInput, setDomainInput] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -325,6 +327,8 @@ export function SenderVerificationCard() {
                         provision={provisionQuery.data}
                         onRecheck={() => recheckMutation.mutate(domain.id)}
                         rechecking={recheckMutation.isPending}
+                        orgName={activeOrg?.name ?? activeOrg?.slug}
+                        domain={domain.domain}
                       />
                     )}
                   </div>
