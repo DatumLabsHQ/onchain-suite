@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  CheckCircleIcon,
-  ChevronDownIcon,
-  TrashIcon,
-} from "@heroicons/react/24/outline";
+import { CheckCircleIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -15,7 +11,9 @@ import { cn, isJsonObject } from "@/lib/utils";
 import { usePagination } from "../../hooks/use-pagination";
 import { ListPager } from "../list-pager";
 import { SettingsCard, SettingsStepper, StatusPill } from "../settings-card";
+import { DeleteDomainButton } from "./delete-domain-button";
 import { parseDomainDns } from "./domain-dns";
+import { type DomainStatus, normalizeDomainStatus } from "./domain-status";
 import { SenderDnsRecords } from "./sender-dns-records";
 import { useAccountOrg } from "./use-account-org";
 import {
@@ -26,15 +24,6 @@ import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 
 const STEPS = ["Add DNS records", "We check", "Verified"];
-
-type DomainStatus = "verified" | "pending" | "failed";
-
-function normalizeStatus(raw: unknown): DomainStatus {
-  const s = typeof raw === "string" ? raw.toLowerCase() : "";
-  if (s.includes("verif") && !s.includes("pending")) return "verified";
-  if (s.includes("fail")) return "failed";
-  return "pending";
-}
 
 function cleanDomain(value: string) {
   return value
@@ -78,7 +67,7 @@ export function SenderVerificationCard() {
           return {
             id: typeof row.id === "string" ? row.id : domain,
             domain,
-            status: normalizeStatus(row.status),
+            status: normalizeDomainStatus(row.status),
           };
         })
         .filter((r): r is DomainRow => r !== null);
@@ -268,35 +257,15 @@ export function SenderVerificationCard() {
                       />
                     </span>
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      // Removing a verified domain stops branded sending from it,
-                      // so confirm that one; pending/failed delete outright.
-                      if (
-                        domain.status === "verified" &&
-                        typeof window !== "undefined" &&
-                        // Deliberate native confirm for a one-off destructive
-                        // action - removing a verified sending domain.
-                        // eslint-disable-next-line no-alert
-                        !window.confirm(
-                          `Remove ${domain.domain}? Branded sending from this domain will stop until it is re-verified.`
-                        )
-                      ) {
-                        return;
-                      }
-                      deleteMutation.mutate(domain.id);
-                    }}
-                    disabled={
+                  <DeleteDomainButton
+                    domain={domain.domain}
+                    status={domain.status}
+                    pending={
                       deleteMutation.isPending &&
                       deleteMutation.variables === domain.id
                     }
-                    aria-label={`Remove ${domain.domain}`}
-                    title="Remove domain"
-                    className="shrink-0 rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
-                  >
-                    <TrashIcon aria-hidden="true" className="h-4 w-4" />
-                  </button>
+                    onConfirm={() => deleteMutation.mutate(domain.id)}
+                  />
                 </div>
 
                 {open ? (
