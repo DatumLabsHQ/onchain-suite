@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  ArrowPathIcon,
   CheckCircleIcon,
   ChevronDownIcon,
   TrashIcon,
@@ -10,8 +9,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
-import { CopyButton } from "@/components/common/copy-button";
-
 import { apiClient } from "@/lib/api-client";
 import { cn, isJsonObject } from "@/lib/utils";
 
@@ -19,15 +16,14 @@ import { usePagination } from "../../hooks/use-pagination";
 import { ListPager } from "../list-pager";
 import { SettingsCard, SettingsStepper, StatusPill } from "../settings-card";
 import { parseDomainDns } from "./domain-dns";
+import { SenderDnsRecords } from "./sender-dns-records";
 import { useAccountOrg } from "./use-account-org";
 import {
-  type DomainProvisionResult,
   type SenderDomainRecord,
   senderIdentitiesService,
 } from "@/features/settings/sender-identities.service";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
-import { Skeleton } from "@/shared/components/ui/skeleton";
 
 const STEPS = ["Add DNS records", "We check", "Verified"];
 
@@ -322,18 +318,14 @@ export function SenderVerificationCard() {
                         </div>
                       </div>
                     ) : (
-                      <>
-                        <AllProviderDnsRecords
-                          loading={provisionQuery.isLoading}
-                          data={provisionQuery.data}
-                        />
-                        <DomainDnsPanel
-                          loading={dnsQuery.isLoading}
-                          data={dnsQuery.data}
-                          onRecheck={() => recheckMutation.mutate(domain.id)}
-                          rechecking={recheckMutation.isPending}
-                        />
-                      </>
+                      <SenderDnsRecords
+                        dnsLoading={dnsQuery.isLoading}
+                        dns={dnsQuery.data}
+                        provisionLoading={provisionQuery.isLoading}
+                        provision={provisionQuery.data}
+                        onRecheck={() => recheckMutation.mutate(domain.id)}
+                        rechecking={recheckMutation.isPending}
+                      />
                     )}
                   </div>
                 ) : null}
@@ -344,329 +336,6 @@ export function SenderVerificationCard() {
         </div>
       ) : null}
     </SettingsCard>
-  );
-}
-
-// Friendly display name per send provider. SES leads; SendGrid/ACS are hidden.
-const PROVIDER_META: Record<string, string> = {
-  acs: "Azure ACS",
-  ses: "Amazon SES",
-};
-const providerName = (provider: string) =>
-  PROVIDER_META[provider.toLowerCase()] ?? provider ?? "Provider";
-
-// SES is the only surfaced provider - transactional (ACS) and SendGrid records
-// are hidden, so customers publish exactly one set of DNS records.
-const HIDDEN_PROVIDERS = new Set(["sendgrid", "acs"]);
-const providerOrder = (provider: string) => {
-  const p = provider.toLowerCase();
-  if (p === "ses") return 0;
-  if (p === "acs") return 1;
-  return 2;
-};
-
-/**
- * All configured providers' DNS records together (from POST /domain/{id}/provision)
- * so the customer can publish both the transactional and marketing record sets,
- * not just the routed provider's. Skipped/error providers show their reason.
- */
-function AllProviderDnsRecords({
-  loading,
-  data,
-}: {
-  loading: boolean;
-  data: DomainProvisionResult | undefined;
-}) {
-  if (loading) {
-    return <Skeleton className="mb-5 h-24 w-full rounded-lg" />;
-  }
-  // Drop SendGrid entirely and lead with SES (the default DNS provider).
-  const shown = (data?.providers ?? [])
-    .filter((p) => !HIDDEN_PROVIDERS.has(p.provider.toLowerCase()))
-    .sort((a, b) => providerOrder(a.provider) - providerOrder(b.provider));
-  if (shown.length === 0) return null;
-
-  return (
-    <div className="mb-5 space-y-3">
-      <div>
-        <div className="text-sm font-medium text-foreground">
-          DNS records to publish
-        </div>
-        <p className="mt-0.5 text-xs text-muted-foreground">
-          Publish every record below to verify your sending domain.
-        </p>
-      </div>
-      {shown.map((prov) => {
-        const unavailable =
-          prov.status === "skipped" || prov.status === "error";
-        return (
-          <div
-            key={prov.provider}
-            className="rounded-lg border border-border/60 bg-background/60 p-3"
-          >
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-sm font-medium text-foreground">
-                {providerName(prov.provider)}
-              </span>
-              {prov.status === "skipped" ? (
-                <StatusPill tone="pending">Not configured</StatusPill>
-              ) : prov.status === "error" ? (
-                <StatusPill tone="danger">Error</StatusPill>
-              ) : null}
-            </div>
-            {unavailable ? (
-              <p className="mt-1 text-xs text-muted-foreground">
-                {prov.reason ??
-                  (prov.status === "skipped"
-                    ? "This provider isn't configured yet - no records to publish."
-                    : "Couldn't fetch records for this provider.")}
-              </p>
-            ) : prov.records.length === 0 ? (
-              <p className="mt-1 text-xs text-muted-foreground">
-                No records returned yet.
-              </p>
-            ) : (
-              <div className="mt-2 space-y-3">
-                {prov.records.map((r) => (
-                  <div key={`${r.type}-${r.host}`} className="space-y-2">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-xs uppercase tracking-wider text-muted-foreground">
-                        {r.type}
-                      </span>
-                      {r.valid === true ? (
-                        <StatusPill tone="success">Pass</StatusPill>
-                      ) : r.valid === false ? (
-                        <StatusPill tone="pending">Pending</StatusPill>
-                      ) : null}
-                    </div>
-                    <DnsField label="Host" value={r.host} />
-                    <DnsField label="Value" value={r.value} />
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-function DomainDnsPanel({
-  loading,
-  data,
-  onRecheck,
-  rechecking,
-}: {
-  loading: boolean;
-  data: ReturnType<typeof parseDomainDns> | undefined;
-  onRecheck: () => void;
-  rechecking: boolean;
-}) {
-  if (loading || !data) {
-    return (
-      <div className="space-y-3">
-        <Skeleton className="h-14 w-full rounded-lg" />
-        <Skeleton className="h-14 w-full rounded-lg" />
-      </div>
-    );
-  }
-
-  const conflictCount = data.records.filter(
-    (r) => r.conflict && !r.conflict.informational
-  ).length;
-
-  return (
-    <div className="space-y-4">
-      {data.sendReady !== undefined || data.verificationStates.length > 0 ? (
-        <div className="flex flex-wrap items-center gap-2">
-          <StatusPill tone={data.sendReady ? "success" : "pending"}>
-            {data.sendReady ? "Send-ready" : "Verification pending"}
-          </StatusPill>
-          {data.verificationStates.map(({ check, state }) => (
-            <span
-              key={check}
-              className={cn(
-                "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px]",
-                state.toLowerCase() === "verified"
-                  ? "border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
-                  : state.toLowerCase() === "verificationfailed"
-                    ? "border-destructive/40 text-destructive"
-                    : "border-border text-muted-foreground"
-              )}
-            >
-              <span className="font-medium uppercase">{check}</span>
-              {state.replace(/^Verification/, "")}
-            </span>
-          ))}
-        </div>
-      ) : null}
-
-      {conflictCount > 0 ? (
-        <p className="text-xs font-medium text-amber-600 dark:text-amber-400">
-          {conflictCount} existing record{conflictCount === 1 ? "" : "s"}{" "}
-          conflict{conflictCount === 1 ? "s" : ""} with verification, apply the
-          fixes below.
-        </p>
-      ) : null}
-
-      {data.fixes.length > 0 ? (
-        <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3">
-          <div className="text-xs font-medium text-foreground">
-            How to fix your DNS
-          </div>
-          <ol className="mt-1.5 list-decimal space-y-1 pl-4 text-xs leading-5 text-foreground">
-            {data.fixes.map((fix) => (
-              <li key={fix}>{fix}</li>
-            ))}
-          </ol>
-        </div>
-      ) : null}
-
-      {data.records.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          DNS records are not available yet for this domain.
-        </p>
-      ) : (
-        <div className="space-y-3">
-          {data.records.map((record) => (
-            <div
-              key={record.id}
-              className="rounded-lg border border-border/60 bg-background/60 p-3"
-            >
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-xs uppercase tracking-wider text-muted-foreground">
-                  {record.type}
-                </span>
-                {record.verified === true ? (
-                  <StatusPill tone="success">Pass</StatusPill>
-                ) : record.verified === false ? (
-                  <StatusPill tone="danger">Fail</StatusPill>
-                ) : record.verificationLabel ? (
-                  <StatusPill tone="pending">
-                    {record.verificationLabel}
-                  </StatusPill>
-                ) : null}
-              </div>
-
-              <div className="mt-2 space-y-2">
-                <DnsField label="Host" value={record.host} />
-                {record.current !== undefined ? (
-                  <div>
-                    <div className="text-xs text-muted-foreground">
-                      Current in your DNS
-                    </div>
-                    {record.current.length === 0 ? (
-                      <div className="mt-1 rounded-md border border-dashed border-border/70 px-2 py-1 text-xs italic text-muted-foreground">
-                        Nothing published yet
-                      </div>
-                    ) : (
-                      <div className="mt-1 space-y-1">
-                        {record.current.map((live) => (
-                          <code
-                            key={live}
-                            className="block break-all rounded-md bg-muted/60 px-2 py-1 text-xs text-muted-foreground"
-                          >
-                            {live}
-                          </code>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ) : null}
-                <DnsField
-                  label={
-                    record.recommended !== undefined ||
-                    record.current !== undefined
-                      ? "Recommended value"
-                      : "Value"
-                  }
-                  value={record.recommended ?? record.value}
-                />
-              </div>
-
-              {record.conflict ? (
-                <div
-                  className={cn(
-                    "mt-2 rounded-lg border p-2.5 text-xs leading-5",
-                    record.conflict.informational
-                      ? "border-border/70 bg-muted/30 text-muted-foreground"
-                      : "border-amber-500/40 bg-amber-500/10 text-foreground"
-                  )}
-                >
-                  <div className="font-medium">
-                    {record.conflict.informational
-                      ? "Existing record found"
-                      : "Conflicting record - update it"}
-                  </div>
-                  {record.conflict.reason ? (
-                    <p className="mt-1 text-muted-foreground">
-                      {record.conflict.reason}
-                    </p>
-                  ) : null}
-                  {record.conflict.actions.map((action) => (
-                    <div
-                      key={[action.action, action.host, action.newValue]
-                        .filter(Boolean)
-                        .join("|")}
-                      className="mt-1.5 flex flex-wrap items-center gap-1.5"
-                    >
-                      <span className="inline-flex rounded-full border border-border/70 bg-background/70 px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase">
-                        {action.action}
-                      </span>
-                      {action.currentValue ? (
-                        <code className="break-all rounded bg-muted px-1.5 py-0.5 text-[11px] line-through opacity-70">
-                          {action.currentValue}
-                        </code>
-                      ) : null}
-                      {action.newValue ? (
-                        <span className="flex items-center gap-1">
-                          <code className="break-all rounded bg-muted px-1.5 py-0.5 text-[11px]">
-                            {action.newValue}
-                          </code>
-                          <CopyButton value={action.newValue} label="Copy" />
-                        </span>
-                      ) : null}
-                    </div>
-                  ))}
-                  {record.conflict.actions.length === 0 &&
-                  record.conflict.resolution ? (
-                    <p className="mt-1">{record.conflict.resolution}</p>
-                  ) : null}
-                </div>
-              ) : null}
-            </div>
-          ))}
-        </div>
-      )}
-
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={onRecheck}
-        disabled={rechecking}
-      >
-        <ArrowPathIcon
-          aria-hidden="true"
-          className={cn("mr-1.5 h-4 w-4", rechecking && "animate-spin")}
-        />
-        Recheck domain
-      </Button>
-    </div>
-  );
-}
-
-function DnsField({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <div className="text-xs text-muted-foreground">{label}</div>
-      <div className="mt-1 flex items-start gap-1.5">
-        <code className="block min-w-0 flex-1 break-all rounded-md bg-muted px-2 py-1 text-xs text-foreground">
-          {value}
-        </code>
-        <CopyButton value={value} label={`Copy ${label.toLowerCase()}`} />
-      </div>
-    </div>
   );
 }
 
