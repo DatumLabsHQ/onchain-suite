@@ -192,15 +192,48 @@ const pickBooleanLike = (...values: unknown[]) => {
   return undefined;
 };
 
-const resolveExplicitStatus = (
+/**
+ * Classify a backend status string into {@link SenderIdentityStatus}, returning
+ * `undefined` when no value is recognized so callers can fall back to their own
+ * derivation (e.g. `dkim && spf`). Accepts several candidate values and uses
+ * the first recognized one.
+ *
+ * Substring matching on "ver" is a trap: the backend's intermediate states
+ * ("VERIFICATION_IN_PROGRESS", "VERIFICATION_NOT_STARTED") and "unverified" all
+ * contain it, so a naive `includes("ver")` marks a domain still being checked
+ * as verified. We therefore classify intermediate/not-yet states FIRST, then
+ * failures, and only then treat a remaining "ver" as verified. Separators are
+ * stripped so "not_started" / "in-progress" match regardless of delimiter.
+ *
+ * Mirrors `normalizeDomainStatus` in the domain list UI
+ * (components/account/domain-status.ts); kept here with the varargs +
+ * `undefined` contract this service depends on.
+ */
+export const resolveExplicitStatus = (
   ...values: unknown[]
 ): SenderIdentityStatus | undefined => {
   for (const value of values) {
     if (typeof value !== "string") continue;
-    const normalized = value.trim().toLowerCase();
-    // Check pending/failed BEFORE verified: "pending_verification" contains
-    // "ver" and would otherwise be misread as verified.
-    if (normalized.includes("pend")) return "pending";
+    const normalized = value
+      .trim()
+      .toLowerCase()
+      .replace(/[\s_-]/g, "");
+    if (!normalized) continue;
+    // Not-yet / in-flight states FIRST. Several contain "ver"
+    // ("verificationinprogress", "verificationnotstarted", "unverified") and
+    // must not read as verified.
+    if (
+      normalized.includes("pend") ||
+      normalized.includes("progress") ||
+      normalized.includes("notstart") ||
+      normalized.includes("checking") ||
+      normalized.includes("queue") ||
+      normalized.includes("processing") ||
+      normalized.includes("awaiting") ||
+      normalized.includes("unverified")
+    ) {
+      return "pending";
+    }
     if (normalized.includes("fail")) return "failed";
     if (normalized.includes("ver")) return "verified";
   }
