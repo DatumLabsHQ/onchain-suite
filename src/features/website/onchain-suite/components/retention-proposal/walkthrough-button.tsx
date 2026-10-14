@@ -14,18 +14,24 @@ import {
  * its booking modal for any /early-access link and forwards `source`, the same
  * tagging the footer links use.
  */
+const SIZES = {
+  compact: "btn solid",
+  hero: "btn solid lg",
+  large: "btn solid lg rp-cta-lg",
+};
+
 export function WalkthroughButton({
   section,
   size = "compact",
 }: {
   section: WalkthroughSource;
-  size?: "compact" | "large";
+  size?: keyof typeof SIZES;
 }) {
   const href = `${NEXT_STEP.href}?source=retention_proposal_${section.replace(/-/g, "_")}`;
   return (
     <Link
       href={href}
-      className={`btn solid ${size === "large" ? "lg rp-cta-lg" : ""}`}
+      className={SIZES[size]}
       onClick={() =>
         trackProposalEvent({
           name: "retention_proposal_walkthrough_click",

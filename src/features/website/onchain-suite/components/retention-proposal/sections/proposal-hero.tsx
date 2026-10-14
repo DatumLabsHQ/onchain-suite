@@ -1,28 +1,38 @@
 import { CategoryCards } from "@/onchain-suite-website/components/retention-proposal/category-cards";
-import { PlaybookJumpButton } from "@/onchain-suite-website/components/retention-proposal/playbook-jump-button";
+import { HeroActions } from "@/onchain-suite-website/components/retention-proposal/hero-actions";
+import { HeroVisual } from "@/onchain-suite-website/components/retention-proposal/hero-visual";
 import {
   HERO,
+  PICKER_ID,
   SHORT_VERSION,
   UI,
 } from "@/onchain-suite-website/data/retention-proposal";
 
-/** Title, subtitle, the short version and the category picker. */
+/** Hero, the short version and the category picker. */
 export function ProposalHero({ client }: { client: string | null }) {
   return (
     <>
       <section className="rp-hero" aria-labelledby="rp-title">
-        {client && (
-          <p className="tag rp-prepared">
-            {UI.preparedFor} {client}
-          </p>
-        )}
-        <h1 className="h1 load" id="rp-title">
+        <p className="pill rp-eyebrow load">
+          {HERO.eyebrow}
+          {client && (
+            <span>
+              {UI.preparedFor} {client}
+            </span>
+          )}
+        </p>
+        <h1
+          className="h1 load"
+          id="rp-title"
+          style={{ animationDelay: ".06s" }}
+        >
           {HERO.title}
         </h1>
-        <p className="sub load" style={{ animationDelay: ".1s" }}>
+        <p className="sub load" style={{ animationDelay: ".12s" }}>
           {HERO.subtitle}
         </p>
-        <PlaybookJumpButton />
+        <HeroActions />
+        <HeroVisual />
       </section>
 
       <section className="rp-short" aria-labelledby="rp-short-h">
@@ -36,8 +46,12 @@ export function ProposalHero({ client }: { client: string | null }) {
             </p>
           ))}
         </div>
-        <p className="rp-guide">{SHORT_VERSION.guide}</p>
-        <CategoryCards location="hero" />
+        <div className="rp-picker" id={PICKER_ID}>
+          <p className="rp-guide" tabIndex={-1} data-jump-focus>
+            {SHORT_VERSION.guide}
+          </p>
+          <CategoryCards location="hero" />
+        </div>
       </section>
     </>
   );

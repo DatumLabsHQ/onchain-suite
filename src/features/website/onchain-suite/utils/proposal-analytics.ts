@@ -2,8 +2,8 @@ import { track } from "@vercel/analytics";
 
 import type { CategoryId } from "@/onchain-suite-website/types/retention-proposal";
 
-/** Where a walkthrough button sits: a playbook id or the closing section. */
-export type WalkthroughSource = CategoryId | "next-step";
+/** Where a walkthrough button sits: the hero, a playbook or the closing section. */
+export type WalkthroughSource = "hero" | CategoryId | "next-step";
 
 export type ProposalEvent =
   | {

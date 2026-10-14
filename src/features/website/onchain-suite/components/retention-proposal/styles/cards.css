@@ -160,7 +160,8 @@
   gap: 6px;
 }
 .ns .rp-stage,
-.ns .rp-stage-panel {
+.ns .rp-stage-panel,
+.ns .tone-blue {
   --tone: var(--accent);
   --tone-ink: #fff;
   --tone-soft: var(--accent-soft);

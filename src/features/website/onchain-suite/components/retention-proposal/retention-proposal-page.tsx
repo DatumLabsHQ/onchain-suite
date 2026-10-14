@@ -1,5 +1,6 @@
 import "./styles/layout.css";
 import "./styles/hero.css";
+import "./styles/hero-visual.css";
 import "./styles/cards.css";
 import "./styles/flows.css";
 import "./styles/closing.css";

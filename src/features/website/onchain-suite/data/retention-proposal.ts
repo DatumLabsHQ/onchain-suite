@@ -31,6 +31,7 @@ export const META = {
 /** Labels for buttons, controls and screen readers. */
 export const UI = {
   preparedFor: "Prepared for",
+  findPlaybook: "Find your playbook",
   jumpToPlaybook: "Jump to your playbook",
   nowJump: "Now jump to your playbook",
   yourPlaybook: "Your playbook",
@@ -63,9 +64,18 @@ export const UI = {
 };
 
 export const HERO = {
-  title: "Keep the users you already paid to win",
+  eyebrow: "Retention proposal",
+  title: "Keep your users after the incentives end",
   subtitle:
-    "OnchainSuite retention proposal for perp DEXs, prediction markets and DeFi protocols",
+    "OnchainSuite spots the wallets that are slipping and reaches them by email or in-app, while they still have funds in your product.",
+  /** The hero picture: one Loop from section 4, on the stage it acts in. */
+  visual: {
+    loop: "Slipping",
+    stage: "At risk",
+    loopTag: "Loop",
+    label:
+      "The Slipping Loop: when a user's activity falls to half of their own 30-day average, they move to At risk and get a check-in about what changed and what is new. The Loop stops when activity returns.",
+  },
 };
 
 export const SHORT_VERSION = {
@@ -77,6 +87,9 @@ export const SHORT_VERSION = {
   guide:
     "Sections 1 to 5 are for everyone. Pick your category to jump to your playbook, then finish with sections 9 to 12.",
 };
+
+/** Anchor on the category picker, the target of "Find your playbook". */
+export const PICKER_ID = "find-your-playbook";
 
 export const CATEGORIES: CategoryCard[] = [
   {

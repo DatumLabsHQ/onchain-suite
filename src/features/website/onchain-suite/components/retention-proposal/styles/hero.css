@@ -56,22 +56,31 @@
 }
 
 /* ---------- hero + short version ---------- */
+/* No bottom padding: the hero window (hero-visual.css) sits on the line above
+   the short version, like the home page hero. */
 .ns .rp-hero {
   text-align: center;
-  padding: 80px 24px 56px;
+  padding: 72px 24px 0;
 }
-.ns .rp-prepared {
-  margin: 0 0 22px;
+.ns .rp-eyebrow {
+  margin: 0 0 24px;
+}
+.ns .rp-eyebrow span::before {
+  content: "·";
+  margin-right: 6px;
 }
 .ns .rp-hero .h1 {
-  font-size: clamp(36px, 5vw, 58px);
-  max-width: 880px;
+  font-size: clamp(38px, 5.4vw, 64px);
+  max-width: 860px;
 }
 .ns .rp-hero .sub {
-  max-width: 600px;
+  max-width: 560px;
 }
 .ns .rp-hero-ctas {
   margin-top: 28px;
+}
+.ns .rp-picker {
+  scroll-margin-top: calc(60px + 16px);
 }
 
 .ns .rp-short {
@@ -248,7 +257,7 @@
 
 @media (max-width: 1000px) {
   .ns .rp-hero {
-    padding: 56px 20px 40px;
+    padding: 56px 20px 0;
   }
   .ns .rp-short {
     padding: 40px 20px 48px;
