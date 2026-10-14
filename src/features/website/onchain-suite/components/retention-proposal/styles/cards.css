@@ -1,0 +1,272 @@
+/* /retention-proposal: shared small-caps labels, section 1 stats, point cards
+   (blockers, rules, metrics, privacy), section 2 parts and the stage strip. */
+
+.ns .rp-part-k,
+.ns .rp-flow-k,
+.ns .rp-plan-k,
+.ns .rp-signals-head,
+.ns .rp-intel-head,
+.ns .rp-mail-head dt,
+.ns .rp-msg-type {
+  font: 500 11px var(--mono);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--grey);
+}
+
+/* ---------- section 1 stats ---------- */
+.ns .rp-stats {
+  list-style: none;
+  margin: 28px 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.ns .rp-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 24px 24px 20px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: linear-gradient(180deg, var(--cloud), #fff 70%);
+}
+.ns .rp-stat-fig {
+  margin: 0;
+  font-weight: 600;
+  font-size: clamp(34px, 3.6vw, 48px);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.ns .rp-stat-text {
+  flex: 1;
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--ink);
+}
+.ns .rp-stat-src {
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  color: var(--grey);
+}
+
+/* ---------- point cards ---------- */
+.ns .rp-points {
+  list-style: none;
+  margin: 20px 0 28px;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+.ns .rp-points.cols-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.ns .rp-points.cols-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.ns .rp-point {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px 20px 20px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+}
+.ns .rp-point p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--soft);
+}
+.ns .rp-point-label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 15.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.ns .rp-point-n {
+  font: 500 12px var(--mono);
+  color: var(--accent);
+}
+.ns .rp-point-icon,
+.ns .rp-part-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex: none;
+  border-radius: 10px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.ns .rp-point-icon svg,
+.ns .rp-part-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* ---------- section 2 parts ---------- */
+.ns .rp-parts {
+  list-style: none;
+  margin: 24px 0 28px;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+.ns .rp-part {
+  display: flex;
+  flex-direction: column;
+  padding: 18px 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+}
+.ns .rp-part-icon {
+  margin-bottom: 14px;
+}
+.ns .rp-part-name {
+  margin: 0 0 12px;
+  font-size: 18px;
+  font-weight: 600;
+}
+.ns .rp-part-k {
+  margin: 0 0 4px;
+}
+.ns .rp-part-v {
+  margin: 0 0 14px;
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--soft);
+}
+.ns .rp-part-v:last-child {
+  margin-bottom: 0;
+}
+
+/* ---------- section 3 stage strip ---------- */
+.ns .rp-stages {
+  margin: 24px 0 28px;
+}
+.ns .rp-stage-list {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 6px;
+}
+.ns .rp-stage,
+.ns .rp-stage-panel {
+  --tone: var(--accent);
+  --tone-ink: #fff;
+  --tone-soft: var(--accent-soft);
+}
+/* Orange fills carry navy text: brand orange on white is only 2.9:1. */
+.ns .tone-orange {
+  --tone: var(--orange);
+  --tone-ink: var(--ink);
+  --tone-soft: color-mix(in oklab, var(--orange) 9%, #fff);
+}
+.ns .tone-grey {
+  --tone: var(--grey);
+  --tone-soft: var(--panel);
+}
+.ns .tone-navy {
+  --tone: var(--ink);
+  --tone-soft: color-mix(in oklab, var(--ink) 7%, #fff);
+}
+.ns .rp-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  min-height: 84px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-top: 4px solid var(--tone);
+  border-radius: 10px;
+  background: #fff;
+  text-align: left;
+  transition:
+    background 0.2s,
+    color 0.2s;
+}
+.ns .rp-stage:hover {
+  background: var(--tone-soft);
+}
+.ns .rp-stage.is-on {
+  background: var(--tone);
+  border-color: var(--tone);
+  color: var(--tone-ink);
+}
+.ns .rp-stage-n {
+  font: 500 12px var(--mono);
+  color: var(--grey);
+}
+.ns .rp-stage.is-on .rp-stage-n {
+  color: inherit;
+}
+.ns .rp-stage-name {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+.ns .rp-stage-panel {
+  margin-top: 10px;
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--tone);
+  border-radius: 12px;
+  background: var(--tone-soft);
+}
+.ns .rp-stage-title {
+  margin: 0 0 4px;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.ns .rp-stage-desc {
+  margin: 0 0 6px;
+  font-size: 15.5px;
+  color: var(--soft);
+}
+.ns .rp-stage-goal {
+  margin: 0;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+@media (max-width: 1200px) {
+  .ns .rp-parts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 1000px) {
+  .ns .rp-points.cols-3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .ns .rp-stage-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 640px) {
+  .ns .rp-stats,
+  .ns .rp-parts,
+  .ns .rp-points.cols-3,
+  .ns .rp-points.cols-2,
+  .ns .rp-stage-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ns .rp-stage {
+    flex-direction: row;
+    align-items: center;
+    min-height: 0;
+    border-top-width: 1px;
+    border-left: 4px solid var(--tone);
+  }
+}
