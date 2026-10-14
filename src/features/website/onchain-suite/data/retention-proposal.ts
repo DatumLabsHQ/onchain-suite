@@ -65,7 +65,7 @@ export const UI = {
 
 export const HERO = {
   eyebrow: "Retention proposal",
-  title: "Keep your users after the incentives end",
+  title: "Keep more of the users you’ve already won",
   subtitle:
     "OnchainSuite spots the wallets that are slipping and reaches them by email or in-app, while they still have funds in your product.",
   /** The hero picture: one Loop from section 4, on the stage it acts in. */
