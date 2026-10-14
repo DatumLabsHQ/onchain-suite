@@ -26,7 +26,8 @@ export function useActiveSection(ids: readonly string[]): string | null {
       let current: string | null = null;
       for (const id of ids) {
         const el = document.getElementById(id);
-        if (!el) {
+        // Skip anchors with no layout: the playbooks the reader did not pick.
+        if (!el || el.getClientRects().length === 0) {
           continue;
         }
         if (el.getBoundingClientRect().top > line) {
@@ -36,8 +37,9 @@ export function useActiveSection(ids: readonly string[]): string | null {
       }
       // The last section is short; at the bottom of the page it is the one.
       const { scrollHeight } = document.documentElement;
-      if (window.innerHeight + window.scrollY >= scrollHeight - 2) {
-        current = ids[ids.length - 1] ?? current;
+      const last = ids[ids.length - 1];
+      if (last && window.innerHeight + window.scrollY >= scrollHeight - 2) {
+        current = last;
       }
       setActive(current);
     };

@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { createGlossaryTracker, parseBold } from "./glossary-marker";
+import { createGlossaryTracker, parseInline } from "./glossary-marker";
 
 const join = (segments: { text: string }[]) =>
   segments.map((s) => s.text).join("");
 
-describe("parseBold", () => {
+describe("parseInline", () => {
   it("splits bold runs", () => {
-    expect(parseBold("by **email** and **in-app** today")).toEqual([
+    expect(parseInline("by **email** and **in-app** today")).toEqual([
       { text: "by " },
       { text: "email", bold: true },
       { text: " and " },
@@ -17,11 +17,20 @@ describe("parseBold", () => {
   });
 
   it("leaves text without markers as one run", () => {
-    expect(parseBold("plain")).toEqual([{ text: "plain" }]);
+    expect(parseInline("plain")).toEqual([{ text: "plain" }]);
   });
 
   it("keeps an unclosed marker as text", () => {
-    expect(join(parseBold("a ** b"))).toBe("a ** b");
+    expect(join(parseInline("a ** b"))).toBe("a ** b");
+  });
+
+  it("splits ==underline== runs alongside bold", () => {
+    expect(parseInline("**One** rule: ==stop on the action==.")).toEqual([
+      { text: "One", bold: true },
+      { text: " rule: " },
+      { text: "stop on the action", underline: true },
+      { text: "." },
+    ]);
   });
 });
 
@@ -78,9 +87,43 @@ describe("createGlossaryTracker", () => {
     expect(out.some((s) => s.term)).toBe(false);
   });
 
+  it("leaves the product name Automation Trigger API alone", () => {
+    const g = createGlossaryTracker();
+    expect(
+      g.mark("through the Automation Trigger API").some((s) => s.term)
+    ).toBe(false);
+  });
+
   it("does not match inside longer words", () => {
     const g = createGlossaryTracker();
     expect(g.mark("loophole segmentation").some((s) => s.term)).toBe(false);
+  });
+
+  it("prefers the longer term when two overlap", () => {
+    const g = createGlossaryTracker();
+    const out = g.mark("Every retention trigger fires the same day.");
+    expect(out.filter((s) => s.term).map((s) => s.term)).toEqual([
+      "retention-trigger",
+    ]);
+  });
+
+  it("matches the noun suppression but not the verb suppress", () => {
+    const g = createGlossaryTracker();
+    expect(g.mark("we suppress buyers").some((s) => s.term)).toBe(false);
+    expect(
+      g
+        .mark("a suppression rule")
+        .filter((s) => s.term)
+        .map((s) => s.text)
+    ).toEqual(["suppression"]);
+  });
+
+  it("keeps underline on a marked term inside an underlined run", () => {
+    const g = createGlossaryTracker();
+    expect(g.mark("==every capture point==")).toEqual([
+      { text: "every ", underline: true },
+      { text: "capture point", underline: true, term: "capture-point" },
+    ]);
   });
 
   it("keeps bold on a marked term inside a bold run", () => {

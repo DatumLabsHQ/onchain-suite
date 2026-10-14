@@ -1,38 +1,56 @@
-import type { GlossaryKey } from "@/onchain-suite-website/types/retention-proposal";
+import type { GlossaryKey } from "@/onchain-suite-website/types/retention-playbook";
 
-/** One run of text: plain, bold, a glossary term, or a bold glossary term. */
+/**
+ * One run of text: plain, bold, hand-underlined, a glossary term, or a mix
+ * (a bold glossary term, an underlined glossary term).
+ */
 export interface RichSegment {
   text: string;
   bold?: boolean;
+  underline?: boolean;
   term?: GlossaryKey;
 }
 
 /**
  * Word forms that count as a use of each glossary term. "trigger" only matches
  * the noun-like singular, so the verb in "the price that triggers liquidation"
- * is left alone.
+ * is left alone, and "suppression" only matches the noun, not "suppress".
+ * When two terms overlap ("retention trigger" holds "trigger"), the earlier
+ * match wins, which is the longer term.
  */
 export const GLOSSARY_PATTERNS: Record<GlossaryKey, RegExp> = {
   "zero-knowledge-proof": /\bzero-knowledge proofs?\b/i,
   "in-app-message": /\bin-app messages?\b/i,
   "health-factor": /\bhealth factors?\b/i,
+  "retention-trigger": /\bretention triggers?\b/i,
+  "capture-point": /\bcapture points?\b/i,
+  "frequency-cap": /\bfrequency caps?\b/i,
+  suppression: /\bsuppression\b/i,
   segment: /\bsegments?\b/i,
   loop: /\bloops?\b/i,
-  trigger: /\btrigger\b/i,
+  // Not "Automation Trigger API", which is a product name.
+  trigger: /\btrigger\b(?! API)/i,
   cohort: /\bcohorts?\b/i,
   holdout: /\bholdouts?\b/i,
 };
 
-/** Splits `**bold**` markers into segments. An unclosed `**` stays as text. */
-export function parseBold(text: string): RichSegment[] {
+/**
+ * Splits inline markers into segments: `**bold**` and `==underline==` (drawn
+ * by hand on scroll). Markers do not nest. An unclosed marker stays as text.
+ */
+export function parseInline(text: string): RichSegment[] {
   const out: RichSegment[] = [];
-  const re = /\*\*(.+?)\*\*/g;
+  const re = /\*\*(.+?)\*\*|==(.+?)==/g;
   let last = 0;
   for (let m = re.exec(text); m !== null; m = re.exec(text)) {
     if (m.index > last) {
       out.push({ text: text.slice(last, m.index) });
     }
-    out.push({ text: m[1], bold: true });
+    out.push(
+      m[1] !== undefined
+        ? { text: m[1], bold: true }
+        : { text: m[2], underline: true }
+    );
     last = m.index + m[0].length;
   }
   if (last < text.length) {
@@ -109,7 +127,7 @@ export function createGlossaryTracker(
 
   return {
     mark(text: string): RichSegment[] {
-      return parseBold(text).flatMap(markRun);
+      return parseInline(text).flatMap(markRun);
     },
   };
 }

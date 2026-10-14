@@ -1,45 +1,23 @@
-import type { Metadata } from "next";
+import { permanentRedirect } from "next/navigation";
 
-import { RetentionProposalPage } from "@/onchain-suite-website/components/retention-proposal/retention-proposal-page";
-import { SITE_CONFIG_META } from "@/onchain-suite-website/config";
-import { HERO, META } from "@/onchain-suite-website/data/retention-proposal";
-import {
-  parseCategory,
-  sanitizeClientName,
-} from "@/onchain-suite-website/utils/retention-proposal-params";
-
-// Sales collateral sent to prospects by link: keep it out of search results,
-// but give the link a proper preview card when it is pasted into a chat.
-export const metadata: Metadata = {
-  title: META.title,
-  description: META.description,
-  robots: { index: false, follow: false },
-  alternates: { canonical: "/retention-proposal" },
-  openGraph: {
-    title: HERO.title,
-    description: HERO.subtitle,
-    siteName: SITE_CONFIG_META.name,
-    type: "website",
-    images: [{ url: SITE_CONFIG_META.ogImage, width: 1200, height: 630 }],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: HERO.title,
-    description: HERO.subtitle,
-    images: [SITE_CONFIG_META.twitterImage],
-  },
-};
-
+/**
+ * The page moved to /retention-playbook. Early preview links keep working:
+ * the query (?client=, ?category=) is carried over, and browsers keep any
+ * #section across the redirect.
+ */
 export default async function Page({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const params = await searchParams;
-  return (
-    <RetentionProposalPage
-      client={sanitizeClientName(params.client)}
-      category={parseCategory(params.category)}
-    />
-  );
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(await searchParams)) {
+    for (const v of Array.isArray(value) ? value : [value]) {
+      if (v !== undefined) {
+        params.append(key, v);
+      }
+    }
+  }
+  const query = params.toString();
+  permanentRedirect(`/retention-playbook${query ? `?${query}` : ""}`);
 }
