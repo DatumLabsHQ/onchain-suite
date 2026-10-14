@@ -19,7 +19,7 @@ export const META = {
   // The root layout's title template appends " · OnchainSuite".
   title: "Retention playbook",
   description:
-    "Email and in-app retention playbooks for perp DEXs, prediction markets and DeFi protocols, from Surgence Labs on OnchainSuite.",
+    "Email and in-app retention playbooks for perp DEXs, prediction markets and DeFi protocols.",
 };
 
 /** Who sends the playbook. Shown in the top bar in place of the site nav. */
@@ -41,14 +41,12 @@ export const UI = {
   contents: "Contents",
   contentsLabel: "Playbook contents",
   scrollForMore: "Scroll for more",
-  byline: "Written by Surgence Labs · Runs on OnchainSuite",
   tldr: "TLDR",
   what: "What",
   how: "How",
   why: "Why",
   always: "Always",
   never: "Never",
-  artifact: "Artifact",
   kpiWhat: "What we count",
   kpiWindow: "Counted within",
   selected: "Selected",

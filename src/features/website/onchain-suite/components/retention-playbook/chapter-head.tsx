@@ -5,7 +5,7 @@ import { sectionAnchor } from "@/onchain-suite-website/utils/playbook-toc";
 
 /**
  * A chapter's opening: numbered kicker, title (focused after a jump),
- * standfirst, byline and a contents box linking to its sections.
+ * standfirst and a contents box linking to its sections.
  */
 export function ChapterHead({ chapter }: { chapter: Chapter }) {
   return (
@@ -20,7 +20,6 @@ export function ChapterHead({ chapter }: { chapter: Chapter }) {
         {chapter.title}
       </h2>
       <p className="rp-chap-dek">{chapter.dek}</p>
-      <p className="rp-chap-by">{UI.byline}</p>
       <nav
         className="rp-contents"
         aria-label={`${chapter.title}: ${UI.contents}`}

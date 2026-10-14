@@ -1,5 +1,5 @@
 /* /retention-playbook chapters: the opening (kicker, title, standfirst,
-   byline, contents box), the TLDR, sections and the What / How / Why rows,
+   contents box), the TLDR, sections and the What / How / Why rows,
    plus the Atlas-style contents rail. */
 
 .ns .rp-chapter {
@@ -27,13 +27,6 @@
   max-width: 640px;
   font-size: 18px;
   line-height: 1.55;
-  color: var(--grey);
-}
-.ns .rp-chap-by {
-  margin: 16px 0 0;
-  font: 500 11.5px var(--mono);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
   color: var(--grey);
 }
 .ns .rp-contents {
